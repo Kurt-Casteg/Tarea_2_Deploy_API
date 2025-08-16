@@ -3,7 +3,9 @@ import json
 from datetime import datetime
 import time
 
-API_URL = "http://localhost:8000"  # Cambiar por URL de Render
+# IMPORTANTE: Actualiza esta URL con la URL de tu API en producción después del despliegue
+# Ejemplo: "https://tu-aplicacion-en-render.onrender.com"
+API_URL = "http://localhost:8000"  # URL local para desarrollo
 
 def print_separator():
     print("=" * 70)

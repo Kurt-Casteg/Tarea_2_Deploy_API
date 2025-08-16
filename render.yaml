@@ -2,7 +2,32 @@ services:
   - type: web
     name: fraud-detection-api
     runtime: python
-    plan: free
+    plan: free  # Considera actualizar a un plan pago para mejor rendimiento
     autoDeploy: true
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    
+    # Comandos de construcción
+    buildCommand: |
+      pip install -r requirements.txt
+      
+    # Comando para iniciar la aplicación
+    startCommand: gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
+    
+    # Variables de entorno
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.0
+      - key: PYTHONUNBUFFERED
+        value: true
+    
+    # Configuración de despliegue
+    autoDeploy: true
+    region: oregon  # o la región más cercana a tus usuarios
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Recursos (para planes superiores)
+    # plan: standard
+    # resources:
+    #   memory: 512MB
+    #   cpu: 1

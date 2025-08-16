@@ -14,23 +14,27 @@ app = FastAPI(
 
 # Cargar modelo y metadata con manejo de errores robusto
 def load_models():
-    """Cargar modelos con manejo de errores"""
+    """Cargar modelos con manejo de errores y rutas absolutas"""
     try:
-        # Verificar que los archivos existan
-        model_files = [
-            "models/fraud_detection_model.pkl",
-            "models/feature_names.pkl", 
-            "models/dataset_stats.pkl"
-        ]
+        # Obtener el directorio base del proyecto
+        base_dir = os.path.dirname(os.path.abspath(__file__))
         
-        for file_path in model_files:
-            if not os.path.exists(file_path):
-                raise FileNotFoundError(f"Archivo de modelo no encontrado: {file_path}")
+        # Definir rutas a los archivos del modelo
+        model_paths = {
+            'model': os.path.join(base_dir, "models", "fraud_detection_model.pkl"),
+            'features': os.path.join(base_dir, "models", "feature_names.pkl"),
+            'stats': os.path.join(base_dir, "models", "dataset_stats.pkl")
+        }
+        
+        # Verificar que los archivos existan
+        for name, path in model_paths.items():
+            if not os.path.exists(path):
+                raise FileNotFoundError(f"Archivo de modelo no encontrado: {path}")
         
         # Cargar modelos
-        model = joblib.load("models/fraud_detection_model.pkl")
-        feature_names = joblib.load("models/feature_names.pkl")
-        dataset_stats = joblib.load("models/dataset_stats.pkl")
+        model = joblib.load(model_paths['model'])
+        feature_names = joblib.load(model_paths['features'])
+        dataset_stats = joblib.load(model_paths['stats'])
         
         # Validar que el modelo tenga las propiedades esperadas
         if not hasattr(model, 'predict'):
