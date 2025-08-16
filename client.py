@@ -362,39 +362,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```# Modelos Preentrenados Recomendados para API
-
-## 🎯 Criterios de Selección
-- **Fácil implementación**: Pocas líneas de código
-- **Tamaño manejable**: Compatible con Render
-- **Datos de entrada simples**: Fácil de documentar y probar
-- **Resultados interpretables**: Buenos para demostración
-
-## 🏆 Top 5 Recomendaciones
-
-### 1. 💳 **Detección de Fraude en Transacciones**
-**⭐ MÁS RECOMENDADO para caso empresarial**
-
-```python
-from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-import joblib
-import pandas as pd
-import numpy as np
-
-# Crear dataset realista de transacciones
-X, y = make_classification(
-    n_samples=50000,
-    n_features=10,
-    n_informative=8,
-    n_redundant=2,
-    n_classes=2,
-    weights=[0.99, 0.01],  # 99% legítimas, 1% fraudulentas (realista)
-    flip_y=0.01,
-    random_state=42
-)
-
-model = RandomForestClassifier(n_estimators=100, random_state=42)
-model.fit(X, y)
-joblib.dump(model, 'fraud_detection_model.pkl')
