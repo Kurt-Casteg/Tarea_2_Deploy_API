@@ -6,7 +6,7 @@ import time
 # IMPORTANTE: Actualiza esta URL con la URL de tu API en producción después del despliegue
 # Ejemplo: "https://tu-aplicacion-en-render.onrender.com"
 # API_URL = "http://localhost:8000"  # URL local para desarrollo
-API_URL = "https://tu-aplicacion-en-render.onrender.com"  # URL local para desarrollo
+API_URL = "https://tarea-2-deploy-api.onrender.com"  # URL local para desarrollo
 
 def print_separator():
     print("=" * 70)
