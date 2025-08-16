@@ -6,7 +6,7 @@ services:
     autoDeploy: true
     
     # Comandos de construcción
-    buildCommand: |
+    buildCommand: 
       pip install -r requirements.txt
       
     # Comando para iniciar la aplicación
