@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: tarea_deploy_api
+    name: fraud-detection-api
     runtime: python
     plan: free
     autoDeploy: false

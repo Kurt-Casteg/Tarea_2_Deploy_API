@@ -5,6 +5,7 @@ from sklearn.metrics import classification_report, confusion_matrix, roc_auc_sco
 import joblib
 import numpy as np
 import pandas as pd
+import os
 
 def create_realistic_fraud_dataset():
     """Crea un dataset realista de detección de fraude"""
@@ -53,70 +54,117 @@ def create_realistic_fraud_dataset():
     return df.values, y, feature_names
 
 def train_fraud_detection_model():
-    # Crear dataset
-    X, y, feature_names = create_realistic_fraud_dataset()
-    
-    # Split
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-    
-    # Entrenar modelo
-    model = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=10,
-        min_samples_split=5,
-        random_state=42,
-        class_weight='balanced'  # Importante para dataset desbalanceado
-    )
-    model.fit(X_train, y_train)
-    
-    # Evaluar
-    y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)[:, 1]
-    
-    print("=== EVALUACIÓN DEL MODELO ===")
-    print(f"AUC-ROC Score: {roc_auc_score(y_test, y_pred_proba):.4f}")
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred))
-    print("\nConfusion Matrix:")
-    print(confusion_matrix(y_test, y_pred))
-    
-    # Importancia de features
-    feature_importance = pd.DataFrame({
-        'feature': feature_names,
-        'importance': model.feature_importances_
-    }).sort_values('importance', ascending=False)
-    
-    print("\n=== IMPORTANCIA DE FEATURES ===")
-    for _, row in feature_importance.head().iterrows():
-        print(f"{row['feature']}: {row['importance']:.4f}")
-    
-    # Guardar modelo y metadata
-    joblib.dump(model, 'models/fraud_detection_model.pkl')
-    joblib.dump(feature_names, 'models/feature_names.pkl')
-    
-    # Estadísticas del dataset para documentación
-    stats = {
-        'total_samples': len(X),
-        'fraud_percentage': (y.sum() / len(y)) * 100,
-        'feature_ranges': {}
-    }
-    
-    for i, feature in enumerate(feature_names):
-        stats['feature_ranges'][feature] = {
-            'min': float(X[:, i].min()),
-            'max': float(X[:, i].max()),
-            'mean': float(X[:, i].mean())
+    """Entrenar modelo de detección de fraude con validaciones"""
+    try:
+        # Crear dataset
+        print("📊 Creando dataset de entrenamiento...")
+        X, y, feature_names = create_realistic_fraud_dataset()
+        
+        # Validar dataset
+        if len(X) != len(y):
+            raise ValueError("X e y deben tener la misma longitud")
+        if X.shape[1] != len(feature_names):
+            raise ValueError("Número de features no coincide con feature_names")
+        
+        # Split
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+        
+        print(f"✅ Dataset creado: {len(X):,} muestras, {X.shape[1]} features")
+        print(f"📈 Split: {len(X_train):,} entrenamiento, {len(X_test):,} test")
+        
+        # Entrenar modelo
+        print("🤖 Entrenando modelo Random Forest...")
+        model = RandomForestClassifier(
+            n_estimators=100,
+            max_depth=10,
+            min_samples_split=5,
+            random_state=42,
+            class_weight='balanced'  # Importante para dataset desbalanceado
+        )
+        model.fit(X_train, y_train)
+        
+        # Validar modelo entrenado
+        if not hasattr(model, 'predict'):
+            raise ValueError("El modelo no tiene método predict")
+        if not hasattr(model, 'predict_proba'):
+            raise ValueError("El modelo no tiene método predict_proba")
+        
+        # Evaluar
+        y_pred = model.predict(X_test)
+        y_pred_proba = model.predict_proba(X_test)[:, 1]
+        
+        # Validar probabilidades
+        if y_pred_proba.shape[0] != len(y_test):
+            raise ValueError("Error en dimensiones de probabilidades")
+        
+        print("=== EVALUACIÓN DEL MODELO ===")
+        print(f"AUC-ROC Score: {roc_auc_score(y_test, y_pred_proba):.4f}")
+        print("\nClassification Report:")
+        print(classification_report(y_test, y_pred))
+        print("\nConfusion Matrix:")
+        print(confusion_matrix(y_test, y_pred))
+        
+        # Importancia de features
+        feature_importance = pd.DataFrame({
+            'feature': feature_names,
+            'importance': model.feature_importances_
+        }).sort_values('importance', ascending=False)
+        
+        print("\n=== IMPORTANCIA DE FEATURES ===")
+        for _, row in feature_importance.head().iterrows():
+            print(f"{row['feature']}: {row['importance']:.4f}")
+        
+        # Crear directorio models si no existe
+        os.makedirs('models', exist_ok=True)
+        
+        # Guardar modelo y metadata
+        print("💾 Guardando modelo y metadata...")
+        joblib.dump(model, 'models/fraud_detection_model.pkl')
+        joblib.dump(feature_names, 'models/feature_names.pkl')
+        
+        # Estadísticas del dataset para documentación
+        stats = {
+            'total_samples': len(X),
+            'fraud_percentage': (y.sum() / len(y)) * 100,
+            'feature_ranges': {}
         }
-    
-    joblib.dump(stats, 'models/dataset_stats.pkl')
-    
-    print(f"\n=== DATASET INFO ===")
-    print(f"Total samples: {stats['total_samples']:,}")
-    print(f"Fraud percentage: {stats['fraud_percentage']:.2f}%")
-    
-    return model, feature_names, stats
+        
+        for i, feature in enumerate(feature_names):
+            stats['feature_ranges'][feature] = {
+                'min': float(X[:, i].min()),
+                'max': float(X[:, i].max()),
+                'mean': float(X[:, i].mean())
+            }
+        
+        joblib.dump(stats, 'models/dataset_stats.pkl')
+        
+        # Verificar que los archivos se guardaron correctamente
+        model_files = [
+            'models/fraud_detection_model.pkl',
+            'models/feature_names.pkl',
+            'models/dataset_stats.pkl'
+        ]
+        
+        for file_path in model_files:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"No se pudo guardar: {file_path}")
+        
+        print(f"\n=== DATASET INFO ===")
+        print(f"Total samples: {stats['total_samples']:,}")
+        print(f"Fraud percentage: {stats['fraud_percentage']:.2f}%")
+        print(f"✅ Modelo guardado exitosamente en: {', '.join(model_files)}")
+        
+        return model, feature_names, stats
+        
+    except Exception as e:
+        print(f"❌ Error durante el entrenamiento: {e}")
+        raise
 
 if __name__ == "__main__":
     print("🚀 Entrenando modelo de detección de fraude...")
-    train_fraud_detection_model()
-    print("✅ Modelo entrenado y guardado exitosamente!")
+    try:
+        train_fraud_detection_model()
+        print("✅ Modelo entrenado y guardado exitosamente!")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        exit(1)

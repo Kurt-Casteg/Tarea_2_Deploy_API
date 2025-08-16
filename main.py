@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 import joblib
 import numpy as np
 from typing import List, Dict
 from datetime import datetime
+import os
 
 app = FastAPI(
     title="Fraud Detection API",
@@ -11,10 +12,54 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Cargar modelo y metadata
-model = joblib.load("models/fraud_detection_model.pkl")
-feature_names = joblib.load("models/feature_names.pkl")
-dataset_stats = joblib.load("models/dataset_stats.pkl")
+# Cargar modelo y metadata con manejo de errores robusto
+def load_models():
+    """Cargar modelos con manejo de errores"""
+    try:
+        # Verificar que los archivos existan
+        model_files = [
+            "models/fraud_detection_model.pkl",
+            "models/feature_names.pkl", 
+            "models/dataset_stats.pkl"
+        ]
+        
+        for file_path in model_files:
+            if not os.path.exists(file_path):
+                raise FileNotFoundError(f"Archivo de modelo no encontrado: {file_path}")
+        
+        # Cargar modelos
+        model = joblib.load("models/fraud_detection_model.pkl")
+        feature_names = joblib.load("models/feature_names.pkl")
+        dataset_stats = joblib.load("models/dataset_stats.pkl")
+        
+        # Validar que el modelo tenga las propiedades esperadas
+        if not hasattr(model, 'predict'):
+            raise ValueError("El modelo cargado no tiene método predict")
+        if not hasattr(model, 'predict_proba'):
+            raise ValueError("El modelo cargado no tiene método predict_proba")
+        
+        # Validar que feature_names sea una lista
+        if not isinstance(feature_names, list):
+            raise ValueError("feature_names debe ser una lista")
+        
+        # Validar que dataset_stats sea un diccionario
+        if not isinstance(dataset_stats, dict):
+            raise ValueError("dataset_stats debe ser un diccionario")
+            
+        return model, feature_names, dataset_stats
+        
+    except FileNotFoundError as e:
+        raise RuntimeError(f"Error de archivo: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Error cargando modelos: {e}")
+
+# Cargar modelos al iniciar la aplicación
+try:
+    model, feature_names, dataset_stats = load_models()
+    print("✅ Modelos cargados exitosamente")
+except Exception as e:
+    print(f"❌ Error cargando modelos: {e}")
+    raise
 
 class TransactionRequest(BaseModel):
     transaction_amount: float = Field(..., description="Monto de la transacción en USD", ge=0.01, le=50000)
@@ -27,6 +72,24 @@ class TransactionRequest(BaseModel):
     is_weekend: bool = Field(..., description="¿La transacción fue en fin de semana?")
     account_age_days: int = Field(..., description="Antigüedad de la cuenta en días", ge=1, le=10000)
     previous_failed_attempts: int = Field(..., description="Intentos fallidos previos", ge=0, le=20)
+    
+    @validator('transaction_amount')
+    def validate_amount(cls, v):
+        if v < 0.01 or v > 50000:
+            raise ValueError('Monto debe estar entre 0.01 y 50000 USD')
+        return v
+    
+    @validator('merchant_category')
+    def validate_mcc(cls, v):
+        if v < 1000 or v > 9999:
+            raise ValueError('Código MCC debe estar entre 1000 y 9999')
+        return v
+    
+    @validator('transaction_hour')
+    def validate_hour(cls, v):
+        if v < 0 or v > 23:
+            raise ValueError('Hora debe estar entre 0 y 23')
+        return v
 
 class FraudPredictionResponse(BaseModel):
     is_fraud: bool
@@ -57,6 +120,10 @@ def get_merchant_category_name(mcc: int) -> str:
 def analyze_risk_factors(features: np.ndarray, feature_names: List[str]) -> List[str]:
     """Identificar factores de riesgo basado en las features"""
     risk_factors = []
+    
+    # Validar que features tenga la longitud correcta
+    if len(features) != len(feature_names):
+        return ["Error: Número de features no coincide"]
     
     # Índices de features (deben coincidir con el orden en train_model.py)
     amount = features[0]
@@ -156,9 +223,24 @@ def detect_fraud(request: TransactionRequest):
             request.previous_failed_attempts
         ]])
         
-        # Realizar predicción
-        prediction = model.predict(features)[0]
-        probabilities = model.predict_proba(features)[0]
+        # Validar que features tenga la forma correcta
+        if features.shape[1] != len(feature_names):
+            raise ValueError(f"Se esperaban {len(feature_names)} features, se recibieron {features.shape[1]}")
+        
+        # Realizar predicción con manejo de errores
+        try:
+            prediction = model.predict(features)[0]
+        except Exception as e:
+            raise ValueError(f"Error en predicción del modelo: {e}")
+        
+        # Obtener probabilidades con validación
+        try:
+            probabilities = model.predict_proba(features)[0]
+            if len(probabilities) != 2:
+                raise ValueError("El modelo debe tener exactamente 2 clases (legítimo/fraude)")
+        except Exception as e:
+            raise ValueError(f"Error obteniendo probabilidades: {e}")
+        
         fraud_probability = probabilities[1]  # Probabilidad de fraude
         
         # Análisis adicional
@@ -178,8 +260,10 @@ def detect_fraud(request: TransactionRequest):
             model_confidence=round(model_confidence, 4)
         )
         
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Error de validación: {str(e)}")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error en predicción: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error interno del servidor: {str(e)}")
 
 @app.post("/batch-predict")
 def batch_fraud_detection(transactions: List[TransactionRequest]):
@@ -195,10 +279,15 @@ def batch_fraud_detection(transactions: List[TransactionRequest]):
                 "transaction_id": i + 1,
                 "result": result
             })
+        except HTTPException as e:
+            results.append({
+                "transaction_id": i + 1,
+                "error": e.detail
+            })
         except Exception as e:
             results.append({
                 "transaction_id": i + 1,
-                "error": str(e)
+                "error": f"Error inesperado: {str(e)}"
             })
     
     return {"batch_results": results, "processed_count": len(results)}
@@ -235,9 +324,24 @@ def get_sample_transactions():
 
 @app.get("/health")
 def health_check():
-    return {
-        "status": "healthy",
-        "model_loaded": True,
-        "features_loaded": len(feature_names),
-        "timestamp": datetime.now().isoformat()
-    }
+    try:
+        # Verificar que el modelo esté funcionando
+        test_features = np.array([[100, 5411, 12, 1, 1, 50, 5, 0, 365, 0]])
+        test_prediction = model.predict(test_features)
+        test_probabilities = model.predict_proba(test_features)
+        
+        return {
+            "status": "healthy",
+            "model_loaded": True,
+            "features_loaded": len(feature_names),
+            "model_test": "passed",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "model_loaded": True,
+            "features_loaded": len(feature_names),
+            "model_test": f"failed: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
