@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 import time
 
-API_URL = "https://fastapi-example-ugyh.onrender.com"  # Cambiar por URL de Render
+API_URL = "https://tarea-2-deploy-api.onrender.com"  # Cambiar por URL de Render
 
 def print_separator():
     print("=" * 70)
