@@ -1,17 +1,17 @@
-# 🚀 API de Detección de Fraude en Tiempo Real
+# API de Detección de Fraude en Tiempo Real
 
 API de Machine Learning escalable para detectar transacciones fraudulentas en tiempo real utilizando un modelo de Random Forest. Esta solución está diseñada para ser desplegada fácilmente en Render y ofrece una interfaz RESTful para integración con sistemas existentes.
 
-## 🎯 Características
+## Características
 
 - **Detección en tiempo real**: Analiza transacciones individuales
 - **Procesamiento por lotes**: Hasta 100 transacciones simultáneamente
 - **Análisis de riesgo**: Identifica factores de riesgo específicos
 - **Recomendaciones**: Sugiere acciones basadas en el nivel de riesgo
 - **Documentación automática**: Swagger UI integrado
-- **Manejo robusto de errores**: Validaciones completas y mensajes informativos
+- **Manejo de errores**: Validaciones completas y mensajes informativos
 
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Requisitos Previos
 - Python 3.9.23
@@ -45,7 +45,7 @@ API de Machine Learning escalable para detectar transacciones fraudulentas en ti
 
 5. Accede a la documentación interactiva en [http://localhost:8000/docs](http://localhost:8000/docs)
 
-## 📊 Endpoints Disponibles
+## Endpoints Disponibles
 
 ### Predicción Individual
 ```bash
@@ -72,7 +72,7 @@ GET /sample       # Ejemplos de transacciones
 GET /health       # Estado del servicio
 ```
 
-## 🚀 Instalación y Uso
+## Instalación y Uso
 
 ### Local
 ```bash
@@ -89,7 +89,7 @@ uvicorn main:app --reload
 ### Render (Deploy Automático)
 El proyecto está configurado para deploy automático en Render.
 
-## 📝 Ejemplo de Uso
+## Ejemplo de Uso
 
 ### Detect Fraud
 #### Request Body schema: application/json
@@ -132,7 +132,7 @@ Distancia desde ubicación habitual (km)
 
 is_weekend
 required
-boolean (Is Weekend)
+boolean (true, false)
 ¿La transacción fue en fin de semana?
 
 account_age_days
@@ -178,19 +178,19 @@ Intentos fallidos previos
 }
 ```
 
-## 🧪 Testing
+## Testing
 
 Ejecuta el cliente de pruebas:
 ```bash
 python client.py
 ```
 
-## 📚 Documentación Interactiva
+## Documentación Interactiva
 
 - **Swagger UI**: `https://tu-app.onrender.com/docs`
 - **ReDoc**: `https://tu-app.onrender.com/redoc`
 
-## 🏗️ Arquitectura
+## Arquitectura
 
 - **Framework**: FastAPI
 - **Modelo ML**: Random Forest Classifier
@@ -198,14 +198,14 @@ python client.py
 - **Validación**: Pydantic con rangos específicos
 - **Deploy**: Render (Python Web Service)
 
-## 📊 Métricas del Modelo
+## Métricas del Modelo
 
 - **Dataset**: 50,000 transacciones
 - **Tasa de fraude**: ~1% (realista)
 - **Features**: 10 características relevantes
 - **Algoritmo**: Random Forest con class_weight='balanced'
 
-## 🔒 Seguridad
+## Seguridad
 
 - Validación de rangos para todos los campos
 - Manejo de errores robusto
@@ -213,7 +213,7 @@ python client.py
 - Timeouts configurados
 - Validación de integridad del modelo
 
-## 🛠️ Características Técnicas
+## Características Técnicas
 
 ### Validaciones Implementadas
 - Verificación de existencia de archivos de modelo
@@ -228,11 +228,11 @@ python client.py
 - Mensajes de error descriptivos
 - Health check con prueba del modelo
 
-## 📞 Soporte
+## Soporte
 
 Para problemas o preguntas, revisa la documentación interactiva en `/docs`.
 
-## 🚀 Despliegue en Render
+## Despliegue en Render
 
 ### Configuración Automática (Recomendada)
 
@@ -256,7 +256,7 @@ Si necesitas configurar manualmente:
 
 No se requieren variables de entorno adicionales para el funcionamiento básico.
 
-## 📦 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 Tarea_2_Deploy_API/
@@ -271,7 +271,7 @@ Tarea_2_Deploy_API/
 └── render.yaml               # Configuración de Render
 ```
 
-## 🤝 Contribución
+## Contribución
 
 1. Haz fork del proyecto
 2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
@@ -283,7 +283,7 @@ Tarea_2_Deploy_API/
 
 Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
-## 👏 Reconocimientos
+## Reconocimientos
 
 - [FastAPI](https://fastapi.tiangolo.com/) - El framework web utilizado
 - [Scikit-learn](https://scikit-learn.org/) - Para el modelo de Machine Learning
