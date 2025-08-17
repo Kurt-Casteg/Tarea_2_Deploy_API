@@ -1,6 +1,6 @@
-# API de Detección de Fraude
+# 🚀 API de Detección de Fraude en Tiempo Real
 
-API de Machine Learning para detectar transacciones fraudulentas en tiempo real usando Random Forest.
+API de Machine Learning escalable para detectar transacciones fraudulentas en tiempo real utilizando un modelo de Random Forest. Esta solución está diseñada para ser desplegada fácilmente en Render y ofrece una interfaz RESTful para integración con sistemas existentes.
 
 ## 🎯 Características
 
@@ -10,6 +10,40 @@ API de Machine Learning para detectar transacciones fraudulentas en tiempo real 
 - **Recomendaciones**: Sugiere acciones basadas en el nivel de riesgo
 - **Documentación automática**: Swagger UI integrado
 - **Manejo robusto de errores**: Validaciones completas y mensajes informativos
+
+## 🚀 Inicio Rápido
+
+### Requisitos Previos
+- Python 3.9.23
+- pip (gestor de paquetes de Python)
+- Cuenta en [Render](https://render.com) para despliegue
+- URL de la API en producción: (https://tarea-2-deploy-api-1.onrender.com)
+
+### Instalación Local
+
+1. Clona el repositorio:
+   ```bash
+   git clone [URL_DEL_REPOSITORIO]
+   cd Tarea_2_Deploy_API
+   ```
+
+2. Crea y activa un entorno virtual (recomendado):
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # En Windows: .\venv\Scripts\activate
+   ```
+
+3. Instala las dependencias:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Ejecuta el servidor de desarrollo:
+   ```bash
+   uvicorn main:app --host 0.0.0.0 --port $PORT --reload
+   ```
+
+5. Accede a la documentación interactiva en [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ## 📊 Endpoints Disponibles
 
@@ -56,6 +90,61 @@ uvicorn main:app --reload
 El proyecto está configurado para deploy automático en Render.
 
 ## 📝 Ejemplo de Uso
+
+### Detect Fraud
+#### Request Body schema: application/json
+
+```
+transaction_amount
+required
+number (Transaction Amount) [ 0.01 .. 50000 ]
+Monto de la transacción en USD
+
+merchant_category
+required
+integer (Merchant Category) [ 1000 .. 9999 ]
+Código de categoría del comerciante (MCC)
+
+transaction_hour
+required
+integer (Transaction Hour) [ 0 .. 23 ]
+Hora de la transacción (0-23)
+
+days_since_last_transaction
+required
+integer (Days Since Last Transaction) [ 0 .. 365 ]
+Días desde la última transacción
+
+transaction_count_1h
+required
+integer (Transaction Count 1H) [ 0 .. 50 ]
+Número de transacciones en la última hora
+
+avg_transaction_amount_30d
+required
+number (Avg Transaction Amount 30D) [ 0 .. 10000 ]
+Monto promedio de transacciones en 30 días
+
+distance_from_home
+required
+number (Distance From Home) [ 0 .. 20000 ]
+Distancia desde ubicación habitual (km)
+
+is_weekend
+required
+boolean (Is Weekend)
+¿La transacción fue en fin de semana?
+
+account_age_days
+required
+integer (Account Age Days) [ 1 .. 10000 ]
+Antigüedad de la cuenta en días
+
+previous_failed_attempts
+required
+integer (Previous Failed Attempts) [ 0 .. 20 ]
+Intentos fallidos previos
+```
 
 ### Transacción Legítima
 ```json
@@ -143,11 +232,63 @@ python client.py
 
 Para problemas o preguntas, revisa la documentación interactiva en `/docs`.
 
-## 🔄 Deploy en Render
+## 🚀 Despliegue en Render
 
-1. Conecta tu repositorio a Render
-2. Configura como Web Service
-3. Build Command: `pip install -r requirements.txt`
-4. Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+### Configuración Automática (Recomendada)
 
-El proyecto incluye `render.yaml` para configuración automática.
+1. Haz fork de este repositorio
+2. Crea una nueva cuenta en [Render](https://render.com) si aún no tienes una
+3. Haz clic en "New" y selecciona "Web Service"
+4. Conecta tu cuenta de GitHub/GitLab y selecciona el repositorio
+5. Render detectará automáticamente la configuración del `render.yaml`
+
+### Configuración Manual
+
+Si necesitas configurar manualmente:
+
+1. **Runtime**: Python 3
+2. **Build Command**: `pip install -r requirements.txt`
+3. **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. **Plan**: Free (o selecciona el plan que mejor se adapte a tus necesidades)
+5. **Auto-Deploy**: Actívalo para despliegues automáticos en cada push
+
+### Variables de Entorno
+
+No se requieren variables de entorno adicionales para el funcionamiento básico.
+
+## 📦 Estructura del Proyecto
+
+```
+Tarea_2_Deploy_API/
+├── models/                    # Modelos pre-entrenados
+│   ├── fraud_detection_model.pkl
+│   ├── feature_names.pkl
+│   └── dataset_stats.pkl
+├── main.py                   # Aplicación FastAPI
+├── client.py                 # Cliente de ejemplo
+├── train_model.py            # Script para entrenar el modelo
+├── requirements.txt          # Dependencias
+└── render.yaml               # Configuración de Render
+```
+
+## 🤝 Contribución
+
+1. Haz fork del proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Haz commit de tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Haz push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📄 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 👏 Reconocimientos
+
+- [FastAPI](https://fastapi.tiangolo.com/) - El framework web utilizado
+- [Scikit-learn](https://scikit-learn.org/) - Para el modelo de Machine Learning
+- [Render](https://render.com) - Por el hosting gratuito
+
+---
+
+Hecho con ❤️ para el Magíster de Data Science UDD
